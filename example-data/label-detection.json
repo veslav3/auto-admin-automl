@@ -1,0 +1,118 @@
+﻿{
+  "payload": [
+    {
+      "annotationSpecId": "4968105906710511616",
+      "imageObjectDetection": {
+        "boundingBox": {
+          "normalizedVertices": [
+            {
+              "x": 0.739191,
+              "y": 0.425451
+            },
+            {
+              "x": 0.926535,
+              "y": 0.451976
+            }
+          ]
+        },
+        "score": 0.997049
+      },
+      "displayName": "bedrag"
+    },
+    {
+      "annotationSpecId": "5622218568213987328",
+      "imageObjectDetection": {
+        "boundingBox": {
+          "normalizedVertices": [
+            {
+              "x": 0.35618,
+              "y": 0.315319
+            },
+            {
+              "x": 0.711787,
+              "y": 0.345317
+            }
+          ]
+        },
+        "score": 0.995764
+      },
+      "displayName": "datum"
+    },
+    {
+      "annotationSpecId": "2140373106303172608",
+      "imageObjectDetection": {
+        "boundingBox": {
+          "normalizedVertices": [
+            {
+              "x": 0.665911,
+              "y": 0.40681
+            },
+            {
+              "x": 0.854036,
+              "y": 0.434965
+            }
+          ]
+        },
+        "score": 0.99438
+      },
+      "displayName": "prijsperliter"
+    },
+    {
+      "annotationSpecId": "7451559626228629504",
+      "imageObjectDetection": {
+        "boundingBox": {
+          "normalizedVertices": [
+            {
+              "x": 0.730202,
+              "y": 0.62229
+            },
+            {
+              "x": 0.921364,
+              "y": 0.650476
+            }
+          ]
+        },
+        "score": 0.992842
+      },
+      "displayName": "kilometerstand"
+    },
+    {
+      "annotationSpecId": "5846589309024468992",
+      "imageObjectDetection": {
+        "boundingBox": {
+          "normalizedVertices": [
+            {
+              "x": 0.662879,
+              "y": 0.390267
+            },
+            {
+              "x": 0.852767,
+              "y": 0.414654
+            }
+          ]
+        },
+        "score": 0.991317
+      },
+      "displayName": "volume"
+    },
+    {
+      "annotationSpecId": "8171642985398665216",
+      "imageObjectDetection": {
+        "boundingBox": {
+          "normalizedVertices": [
+            {
+              "x": 0.733917,
+              "y": 0.300755
+            },
+            {
+              "x": 0.931938,
+              "y": 0.338198
+            }
+          ]
+        },
+        "score": 0.988961
+      },
+      "displayName": "tijd"
+    }
+  ]
+}
