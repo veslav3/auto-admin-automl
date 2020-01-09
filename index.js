@@ -1,5 +1,6 @@
 const fs = require('fs'), gm = require('gm');
-const fileName = './resources/02-01-2020.jpg';
+const convertToArrayWithCoords = require('./providers/tensorflow-adapter');
+const fileName = './resources/07-01-2020.jpg';
 
 async function quickstart() {
     // Imports the Google Cloud client library
@@ -11,9 +12,9 @@ async function quickstart() {
     const client = new vision.ImageAnnotatorClient(clientOptions);
 
 
-    let sampledata = fs.readFileSync('./example-data/label-detection.json', 'UTF-8');
+    let sampledata = fs.readFileSync('./example-data/tensorflow-label-detection.json', 'UTF-8');
     sampledata = sampledata.trim();
-    const map = await convertToArrayWithBBs(JSON.parse(sampledata));
+    const map = await convertToArrayWithCoords(JSON.parse(sampledata));
 
     const size = await new Promise((resolve, reject) => gm(fileName).size((err, data) => {
         if (err) {
@@ -27,24 +28,17 @@ async function quickstart() {
         crop(x, coords, size);
         const [result] = await client.textDetection(`./resources/${x}.jpg`);
         const detections = result.textAnnotations;
-        console.log(x, detections[1].description)
+        if (x === 'prijsperliter') {
+            console.log(x, Number.parseFloat(detections[1].description.replace(/,/g, '.')))
+        } else {
+            console.log(x, detections[1].description)
+        }
     }
 }
 
 function crop(name, values, size) {
-    const first = values[0];
-    const second = values[1];
-    gm(fileName).crop((size.width * second.x) - size.width * first.x, (size.height * second.y) - size.height * first.y, size.width * first.x, size.height * first.y).write(`./resources/${name}.jpg`, (err) => err ? console.error(err) : null);
-}
-
-async function convertToArrayWithBBs(data) {
-    const array = data.payload;
-    const map = new Map();
-    array.forEach(element => {
-        map.set(element.displayName, element.imageObjectDetection.boundingBox.normalizedVertices)
-    });
-
-    return map;
+    const {left, top, width, height} = values;
+    gm(fileName).crop(width, height, left, top).write(`./resources/${name}.jpg`, (err) => err ? console.error(err) : null);
 }
 
 if (require.main === module) {
