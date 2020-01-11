@@ -1,0 +1,47 @@
+<script src="https://unpkg.com/@tensorflow/tfjs"></script>
+<script src="https://unpkg.com/@tensorflow/tfjs-automl"></script>
+<html>
+<head>
+    <title>Canvas Race</title>
+     <style type="text/css">
+        canvas {
+            border: 1px solid black;
+            background-image: url("10-01-2020-2.jpg");
+        }
+        </style>
+</head>
+<body>
+<canvas id="myCanvas" width="495" height="1280">
+	<img id="salad" crossorigin="anonymous" src="10-01-2020-2.jpg">
+</canvas>
+</body>
+<!-- [END img_tag]  -->
+<script>
+async function run() {
+  // [START load_and_run_model]
+  const model = await tf.automl.loadObjectDetection('model.json');
+  const img = document.getElementById('salad');
+  const options = {score: 0.2, iou: 0.5, topk: 6};
+  const predictions = await model.detect(img, options);
+  // [END load_and_run_model]
+  console.log(predictions);
+  // Show the resulting object on the page.
+  const pre = document.createElement('pre');
+  pre.textContent = JSON.stringify(predictions, null, 2);
+  document.body.append(pre);
+  const c = document.getElementById("myCanvas");
+  console.log(c)
+const ctx = c.getContext("2d");
+
+predictions.forEach(p => {
+ctx.beginPath();
+ctx.lineWidth = "6";
+ctx.strokeStyle = "red";
+ctx.rect(p.box.left, p.box.top, p.box.width, p.box.height);
+ctx.stroke();
+});
+
+}
+run();
+</script>
+</html>

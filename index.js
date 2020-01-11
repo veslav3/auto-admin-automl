@@ -1,11 +1,29 @@
 require('dotenv').config();
+const express = require('express');
+
 const fs = require('fs'), gm = require('gm');
 const GoogleSpreadsheet = require('google-spreadsheet');
 const creds = require('./credentials/apikey.json');
 const doc = new GoogleSpreadsheet(process.env.SHEET_ID);
 
 const convertToArrayWithCoords = require('./providers/tensorflow-adapter');
-const fileName = './resources/07-01-2020.jpg';
+const fileName = './resources/10-01-2020-2.jpg';
+
+const app = express();
+
+app.get('/', (req, res) => {
+    res.sendFile('./web/index.html', { root: __dirname });
+});
+
+app.get('/:filename', (req, res) => {
+    try {
+        res.sendFile(`./web/${req.params.filename}`, { root: __dirname });
+    } catch (e) {
+        res.send(404)
+    }
+});
+
+app.listen(3000, () => console.log(`listening on port 3000!`));
 
 async function quickstart() {
     // Imports the Google Cloud client library
@@ -37,7 +55,7 @@ async function quickstart() {
         let detections = result.textAnnotations;
 
         if (label === 'bedrag' || label === 'volume' || label === 'prijsperliter') {
-            detections[1].description = detections[1].description.replace(/\./g, ',');
+            detections[1].description = detections[1].description.replace(/\./g, ',').replace(/(^,)|(,$)/g, "");
         }
         row[label] = detections[1].description
     }

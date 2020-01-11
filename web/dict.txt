@@ -1,0 +1,7 @@
+background
+datum
+prijsperliter
+bedrag
+kilometerstand
+volume
+tijd
