@@ -1,11 +1,16 @@
+require('dotenv').config();
 const fs = require('fs'), gm = require('gm');
+const GoogleSpreadsheet = require('google-spreadsheet');
+const creds = require('./credentials/apikey.json');
+const doc = new GoogleSpreadsheet(process.env.SHEET_ID);
+
 const convertToArrayWithCoords = require('./providers/tensorflow-adapter');
 const fileName = './resources/07-01-2020.jpg';
 
 async function quickstart() {
     // Imports the Google Cloud client library
     const vision = require('@google-cloud/vision');
-  
+
     // Creates a client
     const clientOptions = {apiEndpoint: 'eu-vision.googleapis.com'};
 
@@ -23,22 +28,39 @@ async function quickstart() {
             resolve(data);
         }
     }));
-    for (let x of map.keys()) {
-        const coords = map.get(x);
-        crop(x, coords, size);
-        const [result] = await client.textDetection(`./resources/${x}.jpg`);
-        const detections = result.textAnnotations;
-        if (x === 'prijsperliter') {
-            console.log(x, Number.parseFloat(detections[1].description.replace(/,/g, '.')))
-        } else {
-            console.log(x, detections[1].description)
+
+    const row = {};
+    for (let label of map.keys()) {
+        const coords = map.get(label);
+        await crop(label, coords, size);
+        const [result] = await client.textDetection(`./resources/${label}.jpg`);
+        let detections = result.textAnnotations;
+
+        if (label === 'bedrag' || label === 'volume' || label === 'prijsperliter') {
+            detections[1].description = detections[1].description.replace(/\./g, ',');
         }
+        row[label] = detections[1].description
     }
+
+    doc.useServiceAccountAuth(creds, function (err) {
+        doc.addRow(2, row, function(err) {
+            if(err) {
+              console.log(err);
+            }
+          });
+      });
 }
 
-function crop(name, values, size) {
+
+async function crop(name, values) {
     const {left, top, width, height} = values;
-    gm(fileName).crop(width, height, left, top).write(`./resources/${name}.jpg`, (err) => err ? console.error(err) : null);
+    return await new Promise((resolve, reject) => gm(fileName).crop(width, height, left, top).write(`./resources/${name}.jpg`, (err) => {
+        if (err) {
+            reject(err);
+        } else {
+            resolve();
+        }
+    }));
 }
 
 if (require.main === module) {
