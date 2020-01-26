@@ -1,90 +1,68 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
 
-const fs = require('fs'), gm = require('gm');
+gm = require('gm');
 const GoogleSpreadsheet = require('google-spreadsheet');
-const creds = require('./credentials/apikey.json');
 const doc = new GoogleSpreadsheet(process.env.SHEET_ID);
 
 const convertToArrayWithCoords = require('./providers/tensorflow-adapter');
-const fileName = './resources/10-01-2020-2.jpg';
 
 const app = express();
+app.use(cors());
+app.use(bodyParser.json({limit: '10mb', extended: true}));
 
-app.get('/', (req, res) => {
-    res.sendFile('./web/index.html', { root: __dirname });
-});
-
-app.get('/:filename', (req, res) => {
-    try {
-        res.sendFile(`./web/${req.params.filename}`, { root: __dirname });
-    } catch (e) {
-        res.send(404)
-    }
+app.post('/image', (req, res) => {
+    const {image, tensorflow} = req.body;
+    google(image, tensorflow);
+    res.sendStatus(200);
 });
 
 app.listen(3000, () => console.log(`listening on port 3000!`));
 
-async function quickstart() {
-    // Imports the Google Cloud client library
+async function google(image, tensorflow) {
     const vision = require('@google-cloud/vision');
 
-    // Creates a client
     const clientOptions = {apiEndpoint: 'eu-vision.googleapis.com'};
 
     const client = new vision.ImageAnnotatorClient(clientOptions);
 
-
-    let sampledata = fs.readFileSync('./example-data/tensorflow-label-detection.json', 'UTF-8');
-    sampledata = sampledata.trim();
-    const map = await convertToArrayWithCoords(JSON.parse(sampledata));
-
-    const size = await new Promise((resolve, reject) => gm(fileName).size((err, data) => {
-        if (err) {
-            reject(err);
-        } else {
-            resolve(data);
-        }
-    }));
+    const map = await convertToArrayWithCoords(tensorflow);
 
     const row = {};
     for (let label of map.keys()) {
         const coords = map.get(label);
-        await crop(label, coords, size);
+        await crop(label, coords, image);
         const [result] = await client.textDetection(`./resources/${label}.jpg`);
         let detections = result.textAnnotations;
 
-        if (label === 'bedrag' || label === 'volume' || label === 'prijsperliter') {
-            detections[1].description = detections[1].description.replace(/\./g, ',').replace(/(^,)|(,$)/g, "");
+        if (detections[1]) {
+            if (label === 'bedrag' || label === 'volume' || label === 'prijsperliter') {
+                detections[1].description = detections[1].description.replace(/\./g, ',').replace(/(^,)|(,$)/g, "").replace('/', '');
+            }
+            row[label] = detections[1].description
         }
-        row[label] = detections[1].description
     }
 
     doc.useServiceAccountAuth(creds, function (err) {
-        doc.addRow(2, row, function(err) {
-            if(err) {
-              console.log(err);
+        doc.addRow(2, row, function (err) {
+            if (err) {
+                console.log(err);
             }
-          });
-      });
+        });
+    });
 }
 
-
-async function crop(name, values) {
+async function crop(name, values, image) {
     const {left, top, width, height} = values;
-    return await new Promise((resolve, reject) => gm(fileName).crop(width, height, left, top).write(`./resources/${name}.jpg`, (err) => {
+    const imageData = Buffer.from(image, "base64");
+    console.log(imageData);
+    return await new Promise((resolve, reject) => gm(imageData).crop(width, height, left, top).write(`./resources/${name}.jpg`, (err) => {
         if (err) {
             reject(err);
         } else {
             resolve();
         }
     }));
-}
-
-if (require.main === module) {
-    try {
-        quickstart()
-    } catch(err) {
-        console.error(err)
-    }
 }
