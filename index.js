@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const creds = require('./credentials/apikey.json');
 
 gm = require('gm');
 const GoogleSpreadsheet = require('google-spreadsheet');
@@ -33,8 +34,14 @@ async function google(image, tensorflow) {
     const row = {};
     for (let label of map.keys()) {
         const coords = map.get(label);
-        await crop(label, coords, image);
-        const [result] = await client.textDetection(`./resources/${label}.jpg`);
+        const buf = await crop(label, coords, image);
+        const [result] = await client.annotateImage({
+                image: {
+                    content: buf
+                },
+                features: [{type: "TEXT_DETECTION"}]
+
+        });
         let detections = result.textAnnotations;
 
         if (detections[1]) {
@@ -57,12 +64,8 @@ async function google(image, tensorflow) {
 async function crop(name, values, image) {
     const {left, top, width, height} = values;
     const imageData = Buffer.from(image, "base64");
-    console.log(imageData);
-    return await new Promise((resolve, reject) => gm(imageData).crop(width, height, left, top).write(`./resources/${name}.jpg`, (err) => {
-        if (err) {
-            reject(err);
-        } else {
-            resolve();
-        }
+    return   new Promise((resolve, reject) => gm(imageData).crop(width, height, left, top).toBuffer('JPEG',function (err, buffer) {
+        if (err) reject(err);
+        resolve(buffer.toString('base64'));
     }));
 }
