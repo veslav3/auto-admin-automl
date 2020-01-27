@@ -64,7 +64,7 @@ async function google(image, tensorflow) {
 async function crop(name, values, image) {
     const {left, top, width, height} = values;
     const imageData = Buffer.from(image, "base64");
-    return   new Promise((resolve, reject) => gm(imageData).crop(width, height, left, top).toBuffer('JPEG',function (err, buffer) {
+    return new Promise((resolve, reject) => gm(imageData).crop(width, height, left, top).toBuffer('JPEG',function (err, buffer) {
         if (err) reject(err);
         resolve(buffer.toString('base64'));
     }));
